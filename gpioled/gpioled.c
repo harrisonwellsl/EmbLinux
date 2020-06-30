@@ -16,6 +16,9 @@
 #define     GPIOLED_CNT     1
 #define     GPIOLED_NAME    "gpioled"
 
+#define     LEDON           0
+#define     LEDOFF          1
+
 /* GPIOLED设备结构体 */
 struct gpioled_dev {
     dev_t devid;
@@ -41,7 +44,21 @@ static int led_release(struct inode* inode, struct file* flip) {
 }
 
 static ssize_t led_write(struct file* flip, const char __user* buf, size_t count, loff_t* ppos) {
-    
+    int ret;
+    unsigned char databuf[1];
+    struct gpioled_dev* dev = flip->private_data;
+
+    ret  = copy_from_user(databuf, buf, count);
+    if (ret < 0) {
+        return -EINVAL;
+    }
+
+    if (databuf == LEDON) {
+        gpio_set_value(gpioled.led_gpio, 0);
+    } else if (databuf == LEDOFF) {
+        gpio_set_value(gpioled.led_gpio, 1);
+    }
+
     return 0;
 }
 
