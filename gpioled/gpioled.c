@@ -10,6 +10,8 @@
 #include <linux/of.h>
 #include <linux/of_address.h>
 #include <linux/of_irq.h>
+#include <linux/gpio.h>
+#include <linux/of_gpio.h>
 
 #define     GPIOLED_CNT     1
 #define     GPIOLED_NAME    "gpioled"
@@ -48,7 +50,7 @@ static const struct file_operations led_fops = {
     .write      =   led_write,
     .open       =   led_open,
     .release    =   led_release,
-}
+};
 
 /* 驱动入口函数 */
 static int __init led_init(void) {
@@ -113,13 +115,18 @@ static int __init led_init(void) {
     }
     
     /* 使用IO，设置为输出 */
-    ret = gpio_direction_output(gpioled.led_gpio, 0);
+    ret = gpio_direction_output(gpioled.led_gpio, 1);
     if (ret < 0) {
-        goto fail_findnd;
+        goto fail_setoutput;
     }
+
+    /* 设置低电平，点亮LED灯 */
+    gpio_set_value(gpioled.led_gpio, 0);
 
     return 0;
 
+fail_setoutput:
+    gpio_free(gpioled.led_gpio);
 fail_findnd:
     return ret;
 }
@@ -127,6 +134,9 @@ fail_findnd:
 
 /* 驱动出口函数 */
 static void __exit led_exit(void) {
+    /* 关灯 */
+    gpio_set_value(gpioled.led_gpio, 1);
+
     /* 注销字符设备驱动 */
     cdev_del(&gpioled.cdev);
     /* 释放设备号 */
