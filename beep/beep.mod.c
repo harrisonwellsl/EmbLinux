@@ -20,9 +20,7 @@ __used
 __attribute__((section("__versions"))) = {
 	{ 0x64cd2ee2, __VMLINUX_SYMBOL_STR(module_layout) },
 	{ 0xfe990052, __VMLINUX_SYMBOL_STR(gpio_free) },
-	{ 0x716b78dd, __VMLINUX_SYMBOL_STR(gpiod_set_raw_value) },
 	{ 0xde436b34, __VMLINUX_SYMBOL_STR(gpiod_direction_output_raw) },
-	{ 0x4ea3f103, __VMLINUX_SYMBOL_STR(gpio_to_desc) },
 	{ 0x47229b5c, __VMLINUX_SYMBOL_STR(gpio_request) },
 	{ 0x42e7982c, __VMLINUX_SYMBOL_STR(of_get_named_gpio_flags) },
 	{ 0x7485e15e, __VMLINUX_SYMBOL_STR(unregister_chrdev_region) },
@@ -36,6 +34,10 @@ __attribute__((section("__versions"))) = {
 	{ 0x2e5e2fe1, __VMLINUX_SYMBOL_STR(cdev_init) },
 	{ 0x27e1a049, __VMLINUX_SYMBOL_STR(printk) },
 	{ 0x29537c9e, __VMLINUX_SYMBOL_STR(alloc_chrdev_region) },
+	{ 0x716b78dd, __VMLINUX_SYMBOL_STR(gpiod_set_raw_value) },
+	{ 0x4ea3f103, __VMLINUX_SYMBOL_STR(gpio_to_desc) },
+	{ 0xfa2a45e, __VMLINUX_SYMBOL_STR(__memzero) },
+	{ 0x28cc25db, __VMLINUX_SYMBOL_STR(arm_copy_from_user) },
 	{ 0xefd6cf06, __VMLINUX_SYMBOL_STR(__aeabi_unwind_cpp_pr0) },
 };
 

@@ -39,11 +39,30 @@ static int beep_open(struct inode* inode, struct file* flip) {
 }
 
 static int beep_release(struct inode* inode, struct file* flip) {
-    struct beep_dev* dev = (struct beep_dev*)flip->private_data;
+    // struct beep_dev* dev = (struct beep_dev*)flip->private_data;
     return 0;
 }
 
 static ssize_t beep_write(struct file* flip, const char __user* buf, size_t count, loff_t* ppos) {
+
+    int ret = 0;
+    unsigned char databuf[1];
+
+    struct beep_dev* dev = (struct beep_dev*)flip->private_data;
+
+    ret = copy_from_user(databuf, buf, count);
+
+    if (ret < 0) {
+        return -EINVAL;
+    }
+
+    if (databuf[0] == BEEPON) {
+        gpio_set_value(dev->beep_gpio, 0);
+    } else if (databuf[0] == BEEPOFF) {
+        gpio_set_value(dev->beep_gpio, 1);
+    } else {
+        ;
+    }
 
     return 0;
 }
