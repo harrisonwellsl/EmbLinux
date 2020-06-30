@@ -1,0 +1,1 @@
+cmd_/home/harrison/work/workspace/beep/beep.ko := arm-linux-gnueabihf-ld -EL -r  -T ./scripts/module-common.lds --build-id  -o /home/harrison/work/workspace/beep/beep.ko /home/harrison/work/workspace/beep/beep.o /home/harrison/work/workspace/beep/beep.mod.o ;  true
