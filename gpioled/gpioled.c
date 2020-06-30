@@ -22,9 +22,26 @@ struct gpioled_dev {
     struct cdev cdev;
     struct class* class;
     struct device* device;
+    struct device_node* nd;
+    int led_gpio;
 };
 
 struct gpioled_dev gpioled; /* led */
+
+static int led_open(struct inode* inode, struct file* flip) {
+    flip->private_data = &gpioled;
+    return 0;
+}
+
+static int led_release(struct inode* inode, struct file* flip) {
+    struct gpioled_dev* dev = (struct gpioled_dev*)flip->private_data;
+    return 0;
+}
+
+static ssize_t led_write(struct file* flip, const char __user* buf, size_t count, loff_t* ppos) {
+    
+    return 0;
+}
 
 static const struct file_operations led_fops = {
     .owner      =   THIS_MODULE,
@@ -35,6 +52,8 @@ static const struct file_operations led_fops = {
 
 /* 驱动入口函数 */
 static int __init led_init(void) {
+
+    int ret = 0;
 
     /* 注册字符设备驱动 */
     gpioled.major = 0;
@@ -68,9 +87,41 @@ static int __init led_init(void) {
         return PTR_ERR(gpioled.device);
     }
 
-    /*  */
+    /* 获取设备节点 */
+    gpioled.nd = of_find_node_by_path("/gpioled");
+    if (gpioled.nd == NULL) {
+        ret = -EINVAL;
+        goto fail_findnd;
+    }
+
+    /* 获取LED所对应的GPIO */
+    gpioled.led_gpio = of_get_named_gpio(gpioled.nd, "led-gpios", 0);
+    if (gpioled.nd < 0) {
+        printk("Can't find a node led-gpios\r\n");
+        ret = -EINVAL;
+        goto fail_findnd;
+    }
+
+    printk("led gpio num = %d\r\n", gpioled.led_gpio);
+
+    /* 申请IO */
+    ret = gpio_request(gpioled.led_gpio, "led-gpio");
+    if (ret) {
+        printk("Failed to request the led gpio");
+        ret = -EINVAL;
+        goto fail_findnd;
+    }
+    
+    /* 使用IO，设置为输出 */
+    ret = gpio_direction_output(gpioled.led_gpio, 0);
+    if (ret < 0) {
+        goto fail_findnd;
+    }
 
     return 0;
+
+fail_findnd:
+    return ret;
 }
 
 
@@ -86,6 +137,9 @@ static void __exit led_exit(void) {
 
     /* 摧毁类 */
     class_destroy(gpioled.class);
+
+    /* 释放IO */
+    gpio_free(gpioled.led_gpio);
 }
 
 module_init(led_init);
