@@ -12,6 +12,7 @@
 #include <linux/of_irq.h>
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
+#include <linux/atomic.h>
 
 #define     GPIOLED_CNT     1
 #define     GPIOLED_NAME    "gpioled"
@@ -29,17 +30,55 @@ struct gpioled_dev {
     struct device* device;
     struct device_node* nd;
     int led_gpio;
+
+    // atomic_t lock;  /* 原子操作 */
+
+    int dev_status;     /* 0表示设备可以使用，1表示不可以使用 */
+    spinlock_t lock;
 };
 
 struct gpioled_dev gpioled; /* led */
 
 static int led_open(struct inode* inode, struct file* flip) {
     flip->private_data = &gpioled;
+
+    // spin_lock(&gpioled.lock);
+    unsigned long irqflag;
+    spin_lock_irqsave(&gpioled.lock, irqflag);
+
+    if (gpioled.dev_status) {   /* 驱动不能使用 */
+        spin_unlock(&gpioled.lock);
+        return -EBUSY;
+    }
+
+    gpioled.dev_status++;       /* 标记被使用 */
+
+    spin_unlock_irqrestore(&gpioled.lock, irqflag);
+    // spin_unlock(&gpioled.lock);
+
+    /* 判断lock */
+    // if (atomic_read(&gpioled.lock) <= 0) {
+    //     return -EBUSY;
+    // } else {
+    //     atomic_dec(&gpioled.lock);
+    // }
     return 0;
 }
 
 static int led_release(struct inode* inode, struct file* flip) {
     struct gpioled_dev* dev = (struct gpioled_dev*)flip->private_data;
+
+    // atomic_inc(&dev->lock); /* 加一，释放驱动 */
+
+    /*  */
+    // spin_lock(&gpioled.lock);
+    unsigned long irqflag;
+    spin_lock_irqsave(&dev->lock, irqflag);
+    if (dev->dev_status) {
+        dev->dev_status--;      /* 标记驱动可以使用 */
+    }
+    // spin_unlock(&gpioled.lock);
+    spin_unlock_irqrestore(&dev->lock, irqflag);
     return 0;
 }
 
@@ -54,9 +93,9 @@ static ssize_t led_write(struct file* flip, const char __user* buf, size_t count
     }
 
     if (databuf == LEDON) {
-        gpio_set_value(gpioled.led_gpio, 0);
-    } else if (databuf == LEDOFF) {
-        gpio_set_value(gpioled.led_gpio, 1);
+        gpio_set_value(dev->led_gpio, 0);
+    } else if (databuf[0] == LEDOFF) {
+        gpio_set_value(dev->led_gpio, 1);
     }
 
     return 0;
@@ -73,6 +112,13 @@ static const struct file_operations led_fops = {
 static int __init led_init(void) {
 
     int ret = 0;
+    /* 初始化自旋锁 */
+    spin_lock_init(&gpioled.lock);
+
+    gpioled.dev_status = 0;
+
+    /* 初始化原子变量 */
+    // atomic_set(&gpioled.lock, 1);
 
     /* 注册字符设备驱动 */
     gpioled.major = 0;
