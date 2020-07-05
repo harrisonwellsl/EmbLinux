@@ -7,3 +7,6 @@ default:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
 
 endif
+
+clean:
+	rm -rf *.cmd *.o *.ko .tmp* *.mk

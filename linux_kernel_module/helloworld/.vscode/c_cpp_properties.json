@@ -4,7 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/src/linux-headers-4.15.0-107/**"
+                "/usr/src/linux-headers-4.15.0-107-generic/**",
+                "/usr/src/linux-headers-4.15.0-107-generic/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
